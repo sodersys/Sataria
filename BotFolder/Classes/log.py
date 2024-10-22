@@ -69,6 +69,35 @@ def LogRoleRemoved(DiscordId, RobloxId, RoleId):
                 }
             ]
         })
+async def LogGroupRankChange(DiscordId, RobloxId, GroupRoles, OldRank, NewRank):
+    for role in GroupRoles:
+        if role.rank == OldRank:
+            OldRank = role.name
+        if role.rank == NewRank:
+            NewRank = role.name
+    Log({
+        "embeds": [
+            {
+                "title": "Rank Changed",
+                "description": "<@" +str(DiscordId)+ ">",
+                "color": 5165936,
+                "fields": [
+                    {
+                        "name": "Roblox Account",
+                        "value": "https://www.roblox.com/users/{}/profile".format(RobloxId)
+                    },
+                    {
+                        "name": "Old Rank",
+                        "value": OldRank
+                    },
+                    {
+                        "name": "New Rank",
+                        "value": NewRank
+                    }
+                ]
+            }
+        ]
+    })
 def LogNicknameChange(DiscordId, RobloxID, OldNickName, NewNickName):
     Log({
         "embeds": [
@@ -100,4 +129,3 @@ def Log(LogJson):
     if response.status_code != 204:
         print("Error with webhook logging.")
         print(response.status_code)
-        print(LogJson)
