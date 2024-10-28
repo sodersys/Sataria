@@ -1,11 +1,11 @@
-import hikari, lightbulb, os, json, firebase_admin, requests, math, time
+import hikari, lightbulb, os, json, firebase_admin, requests, math, time, miru
 from   hikari         import intents, permissions, embeds, guilds, colors
 from   firebase_admin import db, credentials
 from   roblox         import Client
 import BotFolder.Classes.log as Log
 
 SatarianDiscordIDs = [1293772677781262336]
-SatarianJoinChannels = {1293772677781262336:1293772679416905759}
+SatarianJoinChannels = {1293772677781262336:1299174327995994203}
 
 def GetPath(Path:str):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), Path)
@@ -24,6 +24,13 @@ async def SetRobloxRank(GroupID:int, RobloxID:int, RankID:int):
         return False
     return True
 
+async def AcceptIntoGroup(GroupID:int, RobloxID:int):
+    try:
+        await RobloxClient.get_base_group(group_id=GroupID).accept_user(RobloxID)
+    except:
+        return False
+    return True
+
 firebase_admin.initialize_app(credentials.Certificate(GetPath("Classes/Data/credentials.json")), {'databaseURL':os.environ["FIREBASE_URL"]})
 
 DiscordBot = lightbulb.BotApp(os.environ["DISCORDTOKEN"], help_slash_command=False, intents=hikari.Intents.ALL)
@@ -37,7 +44,7 @@ async def MemberUpdate(DiscordID, RobloxID, ServerID):
     GuildData = RankData[str(ServerID)]
     NameFormat = "{username}"
     RankName = "Guest"
-    RankGrants = {35016156:2}
+    RankGrants = {}
     NameFormatPriority = -1
     RobloxAccount = await RobloxClient.get_user(RobloxID)
 
@@ -53,12 +60,6 @@ async def MemberUpdate(DiscordID, RobloxID, ServerID):
     RolesToGrant = [GuildData['Verified']]
     RolesToRemove = []
     RobloxGroups = GetGroupIDsAndRanks(RobloxID)
-    if 35016156 in RobloxGroups:
-        if RobloxGroups[35016156] == 1:
-            Result = await SetRobloxRank(35016156, RobloxID, 2)
-            Log.LogGroupRankChange(DiscordUser.id, RobloxAccount.id, await RobloxClient.get_base_group(35016156).get_roles(), 1, 2)
-            if Result:
-               RobloxGroups[35016156] = 2
     for Group in GuildData['Binds']:
         Group = int(Group)
         if not Group in RobloxGroups:
@@ -77,10 +78,6 @@ async def MemberUpdate(DiscordID, RobloxID, ServerID):
                 print("issue !!!")
                 continue
             PassedData = GuildData['Binds'][str(Group)][Condition]
-            if PassedData['Priority'] > NameFormatPriority:
-                NameFormatPriority = PassedData['Priority']
-                NameFormat = PassedData['UserNameFormat']
-                RankName = PassedData['RankName']
             if "RankGrant" in PassedData:
                 for RankGroup in PassedData['RankGrant']:
                     if not RankGroup in RankGrants:
@@ -88,9 +85,6 @@ async def MemberUpdate(DiscordID, RobloxID, ServerID):
                     if RankGrants[int(RankGroup)] > PassedData['RankGrant'][RankGroup]:
                         continue
                     RankGrants[int(RankGroup)] = PassedData['RankGrant'][RankGroup]
-
-            RolesToGrant.extend(PassedData['Roles'])
-
     for Group in RankGrants:
         if not Group in RobloxGroups:
             continue
@@ -101,6 +95,12 @@ async def MemberUpdate(DiscordID, RobloxID, ServerID):
         await SetRobloxRank(Group, RobloxAccount.id, int(RankGrants[Group]))
         await Log.LogGroupRankChange(DiscordUser.id, RobloxAccount.id, await RobloxClient.get_base_group(Group).get_roles(), int(RobloxGroups[Group]), int(RankGrants[Group]))
         RobloxGroups[Group] = RankGrants[Group]
+    
+    for Group in GuildData['Binds']:
+        Group = int(Group)
+
+        if not Group in RobloxGroups:
+            RobloxGroups[Group] = 0
         for Condition in GuildData['Binds'][str(Group)]:
             if Condition[:2] == "<=":
                 if not RobloxGroups[Group] <= int(Condition[2:]):
@@ -253,6 +253,51 @@ async def ForceVerify(ctx:lightbulb.SlashContext):
         })
     await ctx.respond(Embed)
 DiscordBot.command(ForceVerify)
+
+Branches = {35076880, 35076877, 35076896}
+
+@lightbulb.option("branch", "What branch you'd like to join.", type=int, required = True, choices=[
+    hikari.CommandChoice(name="Marines", value=35076880),
+    hikari.CommandChoice(name="Navy", value=35076877),
+    hikari.CommandChoice(name="Police", value=35076896)
+    ])
+@lightbulb.command("enlist", "Enlist in a branch.", guilds=SatarianDiscordIDs)
+@lightbulb.implements(lightbulb.SlashCommand)
+async def Enlist(ctx:lightbulb.SlashContext):
+    await ctx.respond(hikari.ResponseType.DEFERRED_MESSAGE_CREATE)
+    RobloxID = db.reference(f"/DiscordIDToRobloxID/{ctx.user.id}").get()
+    if RobloxID == None:
+        await ctx.respond("You're not verified. Run /verify in order to enlist.")
+        return
+    
+    RobloxGroups = GetGroupIDsAndRanks(RobloxID)
+
+    RobloxID = db.reference(f"/DiscordIDToRobloxID/{ctx.user.id}").get()
+
+    if RobloxID == None:
+        await ctx.respond("You must be verified to enlist.")
+
+    if ctx.options.branch in RobloxGroups:
+        await ctx.respond("You've already enlisted into this branch.")
+        return
+    for Branch in Branches:
+        if Branch in RobloxGroups:
+            await ctx.respond("You've already enlisted into a branch. If you wish to change your branch, leave this group. \n-# all rank data regarding this branch will be removed when you leave." + f"https://www.roblox.com/groups/{Branch}/")
+    if not ctx.options.branch in Branches:
+        await ctx.respond(f"{ctx.options.branch} is not a valid option.")
+        return
+    InGroup = await AcceptIntoGroup(ctx.options.branch, RobloxID)
+    if InGroup:
+        Approved = await SetRobloxRank(ctx.options.branch, RobloxID)
+        if Approved:
+            Log.LogGroupRankChange(ctx.user.id, RobloxID, ctx.options.branch, 0, 2)
+        else:
+            await ctx.respond(f"There was an issue ranking you. Contact a member of your branch's HR to resolve the issue.")  
+    else:
+        await ctx.respond(f"You're not pending for https://www.roblox.com/groups/{ctx.options.branch}. Please pend and rerun the command.")
+
+    await ctx.respond("You have been succesfully ranked.")
+
 
 
 def run():
