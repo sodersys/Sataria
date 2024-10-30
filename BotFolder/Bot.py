@@ -208,6 +208,7 @@ async def verify_command(ctx:lightbulb.SlashContext) -> None:
     await ctx.respond(hikari.ResponseType.DEFERRED_MESSAGE_CREATE)
     Info = await MemberVerify(ctx.user.id, ctx.options.robloxusername, ctx.guild_id)
     await ctx.respond("Embeds" in Info and Info["Embeds"] or "ResponseMessage" in Info and Info["ResponseMessage"])
+    
     return
 DiscordBot.command(verify_command)
 
