@@ -259,7 +259,7 @@ Branches = {35076880, 35076877, 35076896}
 @lightbulb.option("branch", "What branch you'd like to join.", type=int, required = True, choices=[
     hikari.CommandChoice(name="Marines", value=35076880),
     hikari.CommandChoice(name="Navy", value=35076877),
-    hikari.CommandChoice(name="Police", value=35076896)
+    #hikari.CommandChoice(name="Police", value=35076896)
     ])
 @lightbulb.command("enlist", "Enlist in a branch.", guilds=SatarianDiscordIDs)
 @lightbulb.implements(lightbulb.SlashCommand)
@@ -277,26 +277,33 @@ async def Enlist(ctx:lightbulb.SlashContext):
     if RobloxID == None:
         await ctx.respond("You must be verified to enlist.")
 
+    if not 35016156 in RobloxGroups:
+        await ctx.respond("You must join Sataria to join a branch of its military. https://www.roblox.com/groups/35016156")
+
     if ctx.options.branch in RobloxGroups:
         await ctx.respond("You've already enlisted into this branch.")
         return
     for Branch in Branches:
         if Branch in RobloxGroups:
-            await ctx.respond("You've already enlisted into a branch. If you wish to change your branch, leave this group. \n-# all rank data regarding this branch will be removed when you leave." + f"https://www.roblox.com/groups/{Branch}/")
+            await ctx.respond("You've already enlisted into a branch. If you wish to change your branch, leave this group. \n-# All rank data regarding this branch will be removed when you leave." + f"\nhttps://www.roblox.com/groups/{Branch}/")
+            return
     if not ctx.options.branch in Branches:
         await ctx.respond(f"{ctx.options.branch} is not a valid option.")
         return
     InGroup = await AcceptIntoGroup(ctx.options.branch, RobloxID)
     if InGroup:
-        Approved = await SetRobloxRank(ctx.options.branch, RobloxID)
+        Approved = await SetRobloxRank(ctx.options.branch, RobloxID, 2)
         if Approved:
             Log.LogGroupRankChange(ctx.user.id, RobloxID, ctx.options.branch, 0, 2)
         else:
             await ctx.respond(f"There was an issue ranking you. Contact a member of your branch's HR to resolve the issue.")  
+            return
     else:
         await ctx.respond(f"You're not pending for https://www.roblox.com/groups/{ctx.options.branch}. Please pend and rerun the command.")
+        return
 
-    await ctx.respond("You have been succesfully ranked.")
+    await ctx.respond("You have succesfully enlisted. Run /update to get your roles.")
+DiscordBot.command(Enlist)
 
 
 
