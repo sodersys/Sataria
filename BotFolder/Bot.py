@@ -286,7 +286,7 @@ async def Enlist(ctx:lightbulb.SlashContext):
         return
     for Branch in Branches:
         if Branch in RobloxGroups:
-            await ctx.respond("You've already enlisted into a branch. If you wish to change your branch, leave this group. \n-# All rank data regarding this branch will be removed when you leave." + f"\nhttps://www.roblox.com/groups/{Branch}/")
+            await ctx.respond("You've already enlisted into a branch. If you wish to change your branch, leave this group. \n-# All rank data regarding this branch will be removed when you leave." + f"\nhttps://www.roblox.com/groups/{Branch}")
             return
     if not ctx.options.branch in Branches:
         await ctx.respond(f"{ctx.options.branch} is not a valid option.")
