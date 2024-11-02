@@ -1,7 +1,7 @@
 from roblox import Client
+from hikari import Member, Permissions
 import requests
 import os
-from hikari import Member
 
 RobloxUser = Client(os.environ["ROBLOXTOKEN"])
 
@@ -23,11 +23,18 @@ class UserClass:
     async def __init__(self, DiscordUser:Member, RobloxId):
         self.DiscordUser = DiscordUser
         self.Verified = False
+        self.CanUpdate = False
         self.Response = ""
         if RobloxId != None and RobloxUser != 0:
             self.RobloxUser = await GetRobloxUser(RobloxId)
             self.Verified = True
             self.Ranks = GetGroupIDsAndRanks(RobloxId)
+            DiscordRoles = self.DiscordUser.get_roles()
+            for Role in DiscordRoles:
+                if Role.name == "Updater" or Role.permissions & Permissions.MANAGE_ROLES == Permissions.MANAGE_ROLES:
+                    self.CanUpdate = True
+                    break
+
         return self
     
     async def SetRobloxRank(self, Group, Rank):
@@ -56,7 +63,7 @@ class UserClass:
            return True
         except: 
             return False
-        
+         
     async def SetDiscordNickName(self, NewNickname):
         await self.DiscordUser.edit(nickname=NewNickname)
 
