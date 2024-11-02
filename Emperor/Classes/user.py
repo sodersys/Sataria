@@ -25,6 +25,7 @@ class UserClass:
         self.Verified = False
         self.CanUpdate = False
         self.Response = ""
+        self.MaxModifyRank = 0
         if RobloxId != None and RobloxUser != 0:
             self.RobloxUser = await GetRobloxUser(RobloxId)
             self.Verified = True
@@ -63,7 +64,14 @@ class UserClass:
            return True
         except: 
             return False
-         
+    
+    def CanManage(self, GroupId, GroupManagementLimit):
+        if self.RobloxUser == None:
+            return
+        if GroupId in self.Ranks:
+            if self.Ranks["GroupId"] >= GroupManagementLimit:
+                self.MaxManagementRank = self.Ranks["GroupId"]-1
+        return 
     async def SetDiscordNickName(self, NewNickname):
         await self.DiscordUser.edit(nickname=NewNickname)
 
