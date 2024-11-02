@@ -8,4 +8,21 @@ def GetPath(Path:str):
 
 firebase_admin.initialize_app(credentials.Certificate(GetPath("../credentials.json")), {'databaseURL':os.environ["FIREBASE_URL"]})
 
-#stuff
+class Reference():
+    def __init__(self, reference):
+        self.Database = db.reference()
+        return self
+    
+    def get(self):
+        if self.Database.get() == None:
+            return False
+        return self.Database.get()
+    
+    def set(self, data):
+        try:
+            self.Database.set(data)
+            return True
+        except:
+            return False
+    
+    def 
