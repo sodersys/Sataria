@@ -17,13 +17,16 @@ def GetGroupIDsAndRanks(RobloxID:int) -> dict:
     RoleDict = {}
     for Group in GroupRoles:
         RoleDict[Group['group']['id']] = Group['role']['rank']
-    return RoleDicts
+    return RoleDict
 
 class UserClass:
     async def __init__(self, DiscordUser:Member, RobloxId):
         self.DiscordUser = DiscordUser
+        self.Verified = False
+        self.Response = ""
         if RobloxId != None and RobloxUser != 0:
             self.RobloxUser = await GetRobloxUser(RobloxId)
+            self.Verified = True
             self.Ranks = GetGroupIDsAndRanks(RobloxId)
         return self
     

@@ -1,7 +1,8 @@
-
+from Emperor.Classes import user
 import firebase_admin
 from  firebase_admin import db, credentials
 import os
+from hikari import Member
 
 def GetPath(Path:str):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), Path)
@@ -10,7 +11,7 @@ firebase_admin.initialize_app(credentials.Certificate(GetPath("../credentials.js
 
 class Reference():
     def __init__(self, reference):
-        self.Database = db.reference()
+        self.Database = db.reference(reference)
         return self
     
     def get(self):
@@ -24,5 +25,7 @@ class Reference():
             return True
         except:
             return False
-    
-    def 
+
+def GetVerifiedUser(DiscordMember:Member):
+    RobloxId = Reference(f"/DiscordIDToRobloxID/{DiscordMember.id}").get()
+    return user.UserClass(DiscordMember, RobloxId)
