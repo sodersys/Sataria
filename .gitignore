@@ -5,3 +5,4 @@ BotFolder/Classes/__pycache__/log.cpython-312.pyc
 BotFolder/Classes/Data/credentials.json
 BotFolder/Classes/Data/RankData.json
 Emperor/credentials.json
+.vscode
