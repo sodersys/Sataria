@@ -12,7 +12,6 @@ firebase_admin.initialize_app(credentials.Certificate(GetPath("../credentials.js
 class Reference():
     def __init__(self, reference):
         self.Database = db.reference(reference)
-        return self
     
     def get(self):
         if self.Database.get() == None:
@@ -28,4 +27,6 @@ class Reference():
 
 async def GetVerifiedUser(DiscordMember:Member):
     RobloxId = Reference(f"/DiscordIDToRobloxID/{DiscordMember.id}").get()
-    return user.UserClass(DiscordMember, RobloxId)
+    User = user.UserClass(DiscordMember)
+    await User.GetRoblox(RobloxId)
+    return User

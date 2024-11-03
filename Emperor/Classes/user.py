@@ -6,9 +6,9 @@ import os
 
 RobloxUser = Client(os.environ["ROBLOXTOKEN"])
 
-async def GetRobloxUser(RobloxId):
+def GetRobloxUser(RobloxId):
     try: 
-        Account = await RobloxUser.get_user(RobloxId)
+        Account = RobloxUser.get_user(RobloxId)
     except:
         return None
     return Account
@@ -21,12 +21,15 @@ def GetGroupIDsAndRanks(RobloxID:int) -> dict:
     return RoleDict
 
 class UserClass:
-    async def __init__(self, DiscordUser:Member, RobloxId):
+    def __init__(self, DiscordUser:Member):
         self.DiscordUser = DiscordUser
         self.Verified = False
         self.CanUpdate = False
-        self.Response = ""
-        self.MaxModifyRank = 0
+        self.Response = "hi"
+        self.MaxModifyRanks = {}
+        self.RobloxUser = None
+
+    async def GetRoblox(self, RobloxId):
         if RobloxId != None and RobloxUser != 0:
             self.RobloxUser = await GetRobloxUser(RobloxId)
             self.Verified = True
@@ -36,8 +39,6 @@ class UserClass:
                 if Role.name == "Updater" or Role.permissions & Permissions.MANAGE_ROLES == Permissions.MANAGE_ROLES:
                     self.CanUpdate = True
                     break
-
-        return self
     
     async def SetRobloxRank(self, Group, Rank):
         if self.RobloxUser == None:
@@ -70,8 +71,8 @@ class UserClass:
         if self.RobloxUser == None:
             return
         if GroupId in self.Ranks:
-            if self.Ranks["GroupId"] >= GroupManagementLimit:
-                self.MaxManagementRank = self.Ranks["GroupId"]-1
+            if self.Ranks[GroupId] >= GroupManagementLimit:
+                self.MaxModifyRanks[GroupId] = self.Ranks[GroupId]-1
         return 
     
     async def SetDiscordNickName(self, NewNickname):
@@ -100,12 +101,13 @@ class UserClass:
         firebase.Reference(f"/PendingVerifications/{RequestedRobloxAccount.id}").set({"DiscordID":self.DiscordUser.id, "Username":self.DiscordUser.username})
         self.Response = f"A verification request has been created between [{RequestedRobloxAccount.name}](https://www.roblox.com/users/{RequestedRobloxAccount.id}/profile) and <@{self.DiscordUser.id}>. Join https://www.roblox.com/games/84342663532399/Verification-Game to verify."
 
-    async def PromptVerify(self):
+    def PromptVerify(self):
         self.Response = "You're not currently verified. Run /verify [roblox name] in order to get access to the server."
         return
     
     async def UpdateRoles(self, Updater):
-        print("hi")        
+        print("hi")
+        self.Response = f"user <@{self.DiscordUser.id}> updated by <@{Updater.DiscordUser.id}>"    
 
 
         
