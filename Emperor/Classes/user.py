@@ -1,3 +1,4 @@
+from Emperor.Classes import firebase
 from roblox import Client
 from hikari import Member, Permissions
 import requests
@@ -72,6 +73,7 @@ class UserClass:
             if self.Ranks["GroupId"] >= GroupManagementLimit:
                 self.MaxManagementRank = self.Ranks["GroupId"]-1
         return 
+    
     async def SetDiscordNickName(self, NewNickname):
         await self.DiscordUser.edit(nickname=NewNickname)
 
@@ -80,6 +82,30 @@ class UserClass:
     
     async def RemoveDiscordRole(self, RoleId):
         await self.DiscordUser.remove_role(RoleId)
+
+    async def Verify(self, RobloxAccountName, Override):
+        if self.RobloxUser != None and Override == False:
+            self.Response = f"You're already verified to roblox account. If you want to override this, reverify with the `override` parameter set to true."
+            return
+        try:
+            RequestedRobloxAccount = await RobloxUser.get_user_by_username(RobloxAccountName)
+        except:
+            self.Response = f"There is no roblox user associated with {RobloxAccountName}"
+            return
+        AlreadyVerified = firebase.Reference(f"/RobloxIDToDiscordID/{RequestedRobloxAccount.id}").get()
+        if AlreadyVerified != None:
+            self.Response = f"[{RequestedRobloxAccount.name}](https://www.roblox.com/users/{RequestedRobloxAccount.id}/profile) is already verified to a user."
+            return
+
+        firebase.Reference(f"/PendingVerifications/{RequestedRobloxAccount.id}").set({"DiscordID":self.DiscordUser.id, "Username":self.DiscordUser.username})
+        self.Response = f"A verification request has been created between [{RequestedRobloxAccount.name}](https://www.roblox.com/users/{RequestedRobloxAccount.id}/profile) and <@{self.DiscordUser.id}>. Join https://www.roblox.com/games/84342663532399/Verification-Game to verify."
+
+    async def PromptVerify(self):
+        self.Response = "You're not currently verified. Run /verify [roblox name] in order to get access to the server."
+        return
+    
+    async def UpdateRoles(self, Updater):
+        print("hi")        
 
 
         

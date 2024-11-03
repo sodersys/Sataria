@@ -7,3 +7,4 @@ BotFolder/Classes/Data/RankData.json
 Emperor/credentials.json
 .vscode
 xp.db
+BotFolder/datapass.py

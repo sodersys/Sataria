@@ -306,7 +306,5 @@ async def Enlist(ctx:lightbulb.SlashContext):
     await ctx.respond("You have succesfully enlisted. Run /update to get your roles.")
 DiscordBot.command(Enlist)
 
-
-
 def run():
     DiscordBot.run()

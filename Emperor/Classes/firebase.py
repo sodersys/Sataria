@@ -27,5 +27,5 @@ class Reference():
             return False
 
 async def GetVerifiedUser(DiscordMember:Member):
-    RobloxId = await Reference(f"/DiscordIDToRobloxID/{DiscordMember.id}").get()
+    RobloxId = Reference(f"/DiscordIDToRobloxID/{DiscordMember.id}").get()
     return user.UserClass(DiscordMember, RobloxId)
