@@ -6,9 +6,9 @@ import os
 
 RobloxUser = Client(os.environ["ROBLOXTOKEN"])
 
-def GetRobloxUser(RobloxId):
+async def GetRobloxUser(RobloxId):
     try: 
-        Account = RobloxUser.get_user(RobloxId)
+        Account = await RobloxUser.get_user(RobloxId)
     except:
         return None
     return Account
@@ -23,23 +23,25 @@ def GetGroupIDsAndRanks(RobloxID:int) -> dict:
 class UserClass:
     def __init__(self, DiscordUser:Member):
         self.DiscordUser = DiscordUser
-        self.Verified = False
-        self.CanUpdate = False
         self.Response = "hi"
         self.MaxModifyRanks = {}
-        self.RobloxUser = None
+
 
     async def GetRoblox(self, RobloxId):
         if RobloxId != None and RobloxUser != 0:
-            self.RobloxUser = await GetRobloxUser(RobloxId)
             self.Verified = True
+            self.RobloxUser = await GetRobloxUser(RobloxId)
             self.Ranks = GetGroupIDsAndRanks(RobloxId)
             DiscordRoles = self.DiscordUser.get_roles()
             for Role in DiscordRoles:
                 if Role.name == "Updater" or Role.permissions & Permissions.MANAGE_ROLES == Permissions.MANAGE_ROLES:
                     self.CanUpdate = True
                     break
-    
+            return
+        self.Verified = False
+        self.RobloxUser = None
+        self.CanUpdate = False
+
     async def SetRobloxRank(self, Group, Rank):
         if self.RobloxUser == None:
             return False
@@ -68,13 +70,14 @@ class UserClass:
             return False
     
     def CanManage(self, GroupId, GroupManagementLimit):
+        self.MaxModifyRanks[GroupId] = 0
         if self.RobloxUser == None:
             return
         if GroupId in self.Ranks:
+            print(self.Ranks[GroupId], GroupManagementLimit)
             if self.Ranks[GroupId] >= GroupManagementLimit:
                 self.MaxModifyRanks[GroupId] = self.Ranks[GroupId]-1
-        return 
-    
+
     async def SetDiscordNickName(self, NewNickname):
         await self.DiscordUser.edit(nickname=NewNickname)
 

@@ -9,5 +9,4 @@ if __name__ == "__main__":
     groupmanagement.run(bot)
     verification.run(bot)
     bot.run()
-
     #xp.run(bot)
