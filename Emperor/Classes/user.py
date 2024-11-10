@@ -3,8 +3,13 @@ from roblox import Client
 from hikari import Member, Permissions, embeds, colors
 import requests
 import os
-import time    
+import time
+import json
+
 RankBinds = {}
+
+with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../RankData.json")) as json_file:
+    RankData = json.load(json_file)
 
 RobloxUser = Client(os.environ["ROBLOXTOKEN"])
 
@@ -228,11 +233,16 @@ class UserClass:
     
 def GetRankBinds(GuildId:int):
     if GuildId in RankBinds:
-        if RankBinds[GuildId]["LastUpdate"]+1000 > int(time.time()):
-            return RankBinds[GuildId]
-    
-    RankBinds[GuildId] = firebase.GetRankBinds(GuildId)
-    RankBinds[GuildId]["LastUpdate"] = int(time.time())
+        if os.environ["DATAMODE"] == "FIREBASE":
+            if RankBinds[GuildId]["LastUpdate"]+1000 > int(time.time()):
+                return RankBinds[GuildId]
+        
+            RankBinds[GuildId] = firebase.GetRankBinds(GuildId)
+            RankBinds[GuildId]["LastUpdate"] = int(time.time())
+    else:
+        if str(GuildId) in RankData:
+            RankBinds[GuildId] = RankData[str(GuildId)]
+
 
     return RankBinds[GuildId]
         
