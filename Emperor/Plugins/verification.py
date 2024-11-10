@@ -40,5 +40,5 @@ async def update_command(ctx:lightbulb.SlashContext) -> None:
 Verification.command(update_command)
 
 def run(bot:lightbulb.BotApp):
-    print("verification `loaded")
+    print("verification loaded")
     bot.add_plugin(Verification)
