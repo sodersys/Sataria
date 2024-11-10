@@ -10,7 +10,7 @@ xp.db
 BotFolder/datapass.py
 Emperor\Classes\__pycache__
 Emperor\Plugins\__pycache__
-Emperor\__pycache__
+Emperor/__pycache__
 Emperor/__pycache__/__init__.cpython-312.pyc
 Emperor/__pycache__/__main__.cpython-312.pyc
 Emperor/Classes/__pycache__/firebase.cpython-312.pyc
@@ -21,3 +21,4 @@ Emperor/Plugins/__pycache__/groupmanagement.cpython-312.pyc
 Emperor/Plugins/__pycache__/verification.cpython-312.pyc
 Emperor/Plugins/__pycache__/xp.cpython-312.pyc
 Emperor/RankData.json
+Emperor\Plugins\__pycache__\apprenticesystem.cpython-312.pyc

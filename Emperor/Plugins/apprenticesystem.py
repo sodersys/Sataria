@@ -8,16 +8,26 @@ import lightbulb
 
 ApprenticeSystem = lightbulb.Plugin("apprenticesystem", "Apprentice System plugin")
 
+@lightbulb.option("user", "The person who's coins you want to check.", type=hikari.OptionType.USER)
 @lightbulb.command("apprenticecoins", "Check your apprentice coins")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def apprenticecoins_command(ctx:lightbulb.SlashContext):
-    Coins = firebase.Reference(f"/ApprenticeCoins/{ctx.user.id}")
+    if ctx.options.user == None:    
+        Coins = firebase.Reference(f"/ApprenticeCoins/{ctx.user.id}")
+        GottenCoins = Coins.get()
+        if GottenCoins:
+            await ctx.respond(f"You have {GottenCoins['Coins']} <:apprenticecoin:1305245764401758361> and {GottenCoins['ExamKeys']} <:ExamKey:1305252720147697684>.")
+            return
+        Coins.set({"ExamKeys":0, "Coins":0})
+        await ctx.respond("You have 0 <:apprenticecoin:1305245764401758361> and 0 <:ExamKey:1305252720147697684>")
+        return
+    Coins = firebase.Reference(f"/ApprenticeCoins/{ctx.options.user.id}")
     GottenCoins = Coins.get()
     if GottenCoins:
-        await ctx.respond(f"You have {GottenCoins['Coins']} <:apprenticecoin:1305245764401758361> and {GottenCoins['ExamKeys']} <:ExamKey:1305252720147697684>.")
+        await ctx.respond(f"<@{ctx.options.user.id}> has {GottenCoins['Coins']} <:apprenticecoin:1305245764401758361> and {GottenCoins['ExamKeys']} <:ExamKey:1305252720147697684>.")
         return
     Coins.set({"ExamKeys":0, "Coins":0})
-    await ctx.respond("You have 0 <:apprenticecoin:1305245764401758361> and 0 <:ExamKey:1305252720147697684>")
+    await ctx.respond(f"<@{ctx.options.user.id}> has 0 <:apprenticecoin:1305245764401758361> and 0 <:ExamKey:1305252720147697684>")
     return
 ApprenticeSystem.command(apprenticecoins_command)
 
@@ -27,11 +37,15 @@ ApprenticeSystem.command(apprenticecoins_command)
 @lightbulb.implements(lightbulb.SlashCommand)
 async def addapprenticecoins_command(ctx:lightbulb.SlashContext):
     VerifiedUser = await firebase.GetVerifiedUser(ctx.member)
+    print(VerifiedUser.GetGroupRank(35076884), 7)
     if VerifiedUser.GetGroupRank(35076884) < 7:
         await ctx.respond("You can not manage Apprentice Coins.")
         return
     if ctx.options.coins >= 10:
         await ctx.respond("Do not cause inflation, noob.")
+        return
+    if ctx.options.coins <= -10:
+        await ctx.respond("You can not subtract more than 10 coins at once.")
         return
     Coins = firebase.Reference(f"/ApprenticeCoins/{ctx.options.user.id}")
     GottenCoins = Coins.get()
@@ -48,30 +62,32 @@ ApprenticeSystem.command(addapprenticecoins_command)
 @lightbulb.option("coins", "The amount of coins you want to give.", required=True, type=int)
 @lightbulb.command("giveapprenticecoins", "Gives your apprentice coins to someone else.")
 @lightbulb.implements(lightbulb.SlashCommand)
-async def addapprenticecoins_command(ctx:lightbulb.SlashContext):
+async def giveapprenticecoins_command(ctx:lightbulb.SlashContext):
+    if ctx.options.coins <= 0:
+        await ctx.respond("No stealing.")
     if ctx.options.coins >= 10:
         await ctx.respond("You can not give more than 10 coins at a time.")
         return
     Coins = firebase.Reference(f"/ApprenticeCoins/{ctx.user.id}")
     GottenCoins = Coins.get()
+    OtherCoins = firebase.Reference(f"/ApprenticeCoins/{ctx.options.user.id}")
+    OtherGottenCoins = OtherCoins.get()
     if GottenCoins:
         if GottenCoins["Coins"] < ctx.options.coins:
             await ctx.respond("You don't have enough coins to preform this action.")
             return
         
         Coins.set({"ExamKeys":GottenCoins["ExamKeys"], "Coins":GottenCoins['Coins']-ctx.options.coins})
-        OtherCoins = firebase.Reference(f"/ApprenticeCoins/{ctx.user.id}")
-        OtherGottenCoins = OtherCoins.get()
+
         if OtherGottenCoins:
             OtherCoins.set({"ExamKeys":OtherGottenCoins["ExamKeys"], "Coins":OtherGottenCoins['Coins']+ctx.options.coins})
         else:
             OtherCoins.set({"ExamKeys":0, "Coins":ctx.options.coins})
-        await ctx.respond(f"<@{ctx.user.id}> has given {ctx.options.coins} to <@{ctx.options.user.id}>")
+        await ctx.respond(f"<@{ctx.user.id}> has given {ctx.options.coins} <:apprenticecoin:1305245764401758361> to <@{ctx.options.user.id}>")
         return
-    Coins.set({"ExamKeys":0, "Coins":ctx.options.coins})
-    await ctx.respond(f"<@{ctx.options.user.id}> now has {ctx.options.coins} <:apprenticecoin:1305245764401758361> and 0 <:ExamKey:1305252720147697684>")
+    await ctx.options("You have no coins to give.")
     return
-
+ApprenticeSystem.command(giveapprenticecoins_command)
 
 
 

@@ -34,7 +34,8 @@ class UserClass:
         self.MaxModifyRanks = {}
 
     def UpdateRanks(self):
-        self.Ranks = GetGroupIDsAndRanks(self.RobloxUser.id)
+        if self.RobloxUser != None:
+            self.Ranks = GetGroupIDsAndRanks(self.RobloxUser.id)
 
     async def GetRoblox(self, RobloxId):
         if RobloxId != None and RobloxUser != 0:
@@ -71,7 +72,7 @@ class UserClass:
         
     def GetGroupRank(self, GroupId:int):
         if GroupId in self.Ranks:
-            return GroupId
+            return self.Ranks[GroupId]
         return 0
     
     async def KickFromGroup(self, Group):
@@ -122,7 +123,11 @@ class UserClass:
         self.Response = "You're not currently verified. Run /verify [roblox name] in order to get access to the server."
         return
     
-    async def UpdateRoles(self, Updater):    
+    async def UpdateRoles(self, Updater):
+        if self.RobloxUser == None:
+            Updater.Response = "You're not verified ^^"
+            return
+        
         GuildData = GetRankBinds(self.DiscordUser.guild_id)
         NameFormat = "{username}"
         RankName = "Guest"
@@ -247,3 +252,8 @@ def GetRankBinds(GuildId:int):
     return RankBinds[GuildId]
         
     
+async def GetRobloxId(Name:str):
+    try:
+        return await RobloxUser.get_user_by_username(Name)
+    except:
+        return False

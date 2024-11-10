@@ -24,6 +24,20 @@ class Reference():
             return True
         except:
             return False
+        
+    def update(self, data):
+        try:
+            self.Database.update(data)
+            return True
+        except:
+            return False
+        
+    def delete(self, data):
+        try:
+            self.Database.delete(data)
+            return True
+        except:
+            return False
 
 async def GetVerifiedUser(DiscordMember:Member):
     RobloxId = Reference(f"/DiscordIDToRobloxID/{DiscordMember.id}").get()

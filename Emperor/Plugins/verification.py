@@ -3,6 +3,7 @@ from Emperor.Classes import user
 
 import hikari
 import lightbulb
+from hikari import embeds
 
 Verification = lightbulb.Plugin("verification", "Verification plugin")
 
@@ -20,6 +21,34 @@ async def verify_command(ctx:lightbulb.SlashContext) -> None:
 
 Verification.command(verify_command)
 
+@lightbulb.option("discorduser", "Discord user of the person you want to verify.", type=hikari.OptionType.USER)
+@lightbulb.option("robloxname", "Roblox name of the person you want to verify.", type=str)
+@lightbulb.command("forceverify", "Force verify someone")
+@lightbulb.implements(lightbulb.SlashCommand)
+async def ForceVerify(ctx:lightbulb.SlashContext):
+    User: user.UserClass = await firebase.GetVerifiedUser(ctx.member)
+    if not User.CanUpdate:
+        return
+
+    SelectedRobloxAccount = user.GetRobloxId(ctx.options.robloxname)
+    await ctx.respond(hikari.ResponseType.DEFERRED_MESSAGE_CREATE)
+    Embed = embeds.Embed(title="Account Force Verified", description="<@"+str(ctx.options.discorduser.id)+"> / https://www.roblox.com/users/"+str(SelectedRobloxAccount.id)+"/profile", color=colors.Color(7110962))
+    CurrentRobloxAccount = firebase.Reference(f"/DiscordIDToRobloxID/{ctx.options.discorduser.id}").get()
+    if CurrentRobloxAccount != None:
+        if CurrentRobloxAccount == SelectedRobloxAccount.id:
+            await ctx.respond("<@"+str(ctx.options.discorduser.id)+"> / https://www.roblox.com/users/"+str(SelectedRobloxAccount.id)+"/profile is already bound.")
+            return
+        Embed.add_field("Account unbound", "<@"+str(ctx.options.discorduser.id)+"> / https://www.roblox.com/users/"+CurrentRobloxAccount+"/profile")
+        firebase.Reference(f"/DiscordIDToRobloxID/{ctx.options.discorduser.id}").delete()
+        firebase.Reference(f"/RobloxIDToDiscordID/{CurrentRobloxAccount}").delete()
+    firebase.Reference("/DiscordIDToRobloxID").update({
+        str(ctx.options.discorduser.id):SelectedRobloxAccount.id,
+        })
+    firebase.Reference("/RobloxIDToDiscordID").update({
+        SelectedRobloxAccount.id:str(ctx.options.discorduser.id),
+        })
+    await ctx.respond(Embed)
+Verification.command(ForceVerify)
 
 @lightbulb.option("user", "Discord user to update.", type=hikari.OptionType.USER, required=False)
 @lightbulb.command("update", "Update a user or yourself.")
