@@ -119,6 +119,7 @@ async def MemberUpdate(DiscordID, RobloxID, ServerID):
                 NameFormatPriority = PassedData['Priority']
                 NameFormat = PassedData['UserNameFormat']
                 RankName = PassedData['RankName']
+            print(PassedData)
             RolesToGrant.extend(PassedData['Roles'])
 
     for Roles in CurrentRoles:

@@ -1,8 +1,10 @@
 from Emperor.Classes import firebase
 from roblox import Client
-from hikari import Member, Permissions
+from hikari import Member, Permissions, embeds, colors
 import requests
 import os
+import time    
+RankBinds = {}
 
 RobloxUser = Client(os.environ["ROBLOXTOKEN"])
 
@@ -26,14 +28,16 @@ class UserClass:
         self.Response = "hi"
         self.MaxModifyRanks = {}
 
+    def UpdateRanks(self):
+        self.Ranks = GetGroupIDsAndRanks(self.RobloxUser.id)
 
     async def GetRoblox(self, RobloxId):
         if RobloxId != None and RobloxUser != 0:
             self.Verified = True
             self.RobloxUser = await GetRobloxUser(RobloxId)
-            self.Ranks = GetGroupIDsAndRanks(RobloxId)
-            DiscordRoles = self.DiscordUser.get_roles()
-            for Role in DiscordRoles:
+            self.UpdateRanks()
+            self.DiscordRoles = self.DiscordUser.get_roles()
+            for Role in self.DiscordRoles:
                 if Role.name == "Updater" or Role.permissions & Permissions.MANAGE_ROLES == Permissions.MANAGE_ROLES:
                     self.CanUpdate = True
                     break
@@ -60,6 +64,11 @@ class UserClass:
         except: 
             return False
         
+    def GetGroupRank(self, GroupId:int):
+        if GroupId in self.Ranks:
+            return GroupId
+        return 0
+    
     async def KickFromGroup(self, Group):
         if self.RobloxUser == None:
             return False
@@ -108,10 +117,123 @@ class UserClass:
         self.Response = "You're not currently verified. Run /verify [roblox name] in order to get access to the server."
         return
     
-    async def UpdateRoles(self, Updater):
-        print("hi")
-        self.Response = f"user <@{self.DiscordUser.id}> updated by <@{Updater.DiscordUser.id}>"    
+    async def UpdateRoles(self, Updater):    
+        GuildData = GetRankBinds(self.DiscordUser.guild_id)
+        NameFormat = "{username}"
+        RankName = "Guest"
+        RankGrants = {}
+        NameFormatPriority = -1
 
+        if GuildData == False:
+            FormatedName = str.format(NameFormat, username=self.RobloxAccount.name)
+            await self.SetDiscordNickName(FormatedName)
+            Embed = embeds.Embed(title="Sataria Verification", description="This discord is not currently set up to give roles.", color=7677476)
+            Embed.add_field(name="Name Updated", value=FormatedName)
+            Updater.Response = Embed
+            return
+        
+        CurrentRoles = self.DiscordRoles
+        RolesToGrant = [GuildData['Verified']]
+        RolesToRemove = []
+        for Group in GuildData['Binds']:
+            Group = int(Group)
+            if not Group in self.Ranks:
+                self.Ranks[Group] = 0
+            for Condition in GuildData['Binds'][str(Group)]:
+                if Condition[:2] == "<=":
+                    if not self.Ranks[Group] <= int(Condition[2:]):
+                        continue
+                elif Condition[:2] == ">=": 
+                    if not self.Ranks[Group] >= int(Condition[2:]):
+                        continue
+                elif Condition[:2] == "==": 
+                    if not self.Ranks[Group] == int(Condition[2:]):
+                        continue
+                else:
+                    print("issue !!!")
+                    continue
+                PassedData = GuildData['Binds'][str(Group)][Condition]
+                if "RankGrant" in PassedData:
+                    for RankGroup in PassedData['RankGrant']:
+                        if not RankGroup in RankGrants:
+                            RankGrants[int(RankGroup)] = PassedData['RankGrant'][RankGroup]
+                        if RankGrants[int(RankGroup)] > PassedData['RankGrant'][RankGroup]:
+                            continue
+                        RankGrants[int(RankGroup)] = PassedData['RankGrant'][RankGroup]
+        for Group in RankGrants:
+            if not Group in self.Ranks:
+                continue
+            if self.Ranks[Group] >= 12:
+                continue
+            if self.Ranks[Group] == RankGrants[Group]:
+                continue
+            await self.SetRobloxRank(Group, int(RankGrants[Group]))
+            self.Ranks[Group] = RankGrants[Group]
+        
+        for Group in GuildData['Binds']:
+            Group = int(Group)
 
+            if not Group in self.Ranks:
+                self.Ranks[Group] = 0
+            for Condition in GuildData['Binds'][str(Group)]:
+                if Condition[:2] == "<=":
+                    if not self.Ranks[Group] <= int(Condition[2:]):
+                        continue
+                elif Condition[:2] == ">=": 
+                    if not self.Ranks[Group] >= int(Condition[2:]):
+                        continue
+                elif Condition[:2] == "==": 
+                    if not self.Ranks[Group] == int(Condition[2:]):
+                        continue
+                else:
+                    print("issue !!!")
+                    continue
+                PassedData = GuildData['Binds'][str(Group)][Condition]
+                if PassedData['Priority'] > NameFormatPriority:
+                    NameFormatPriority = PassedData['Priority']
+                    NameFormat = PassedData['UserNameFormat']
+                    RankName = PassedData['RankName']
+                if "Roles" in PassedData:
+                    RolesToGrant.extend(PassedData['Roles'])
+
+        for Roles in CurrentRoles:
+            if not str(Roles.id) in GuildData['Roles']:
+                continue
+            if str(Roles.id) in RolesToGrant:
+                RolesToGrant = [i for i in RolesToGrant if i != str(Roles.id)] 
+                continue
+            RolesToRemove.append(str(Roles.id))
+
+        Embed = embeds.Embed(title="Update Complete", description=self.DiscordUser.id == Updater.DiscordUser.id and f"Welcome, {RankName} {self.RobloxUser.name}." or f"<@{self.DiscordUser.id}> was updated by <@{Updater.DiscordUser.id}>", color=colors.Color(4367920),url="https://www.roblox.com/groups/35016156/SATARIA#!/about")
+        if len(RolesToGrant) >= 1: Embed.add_field(name="Roles Added", value="<@&"+(">\n<@&".join(RolesToGrant))+">")
+        if len(RolesToRemove) >= 1: Embed.add_field(name="Roles Removed", value="<@&"+(">\n<@&".join(RolesToRemove))+">")
+        for Role in RolesToGrant:
+            try:
+                await self.AddDiscordRole(int(Role))
+            except:
+                print(Role, "add")
+        for Role in RolesToRemove:
+            try:
+                await self.RemoveDiscordRole(int(Role))
+            except:
+                print(Role, "remove")
+        FormatedName = str.format(NameFormat, username=self.RobloxUser.name)
+        if FormatedName != self.DiscordUser.nickname and FormatedName != self.DiscordUser.username:
+            try:
+                await self.SetDiscordNickName(FormatedName)
+                Embed.add_field(name="Nickname Changed", value=FormatedName)
+            except:
+                Embed.add_field(name="Nickname Changed", value="Unable to change nickname due to an error.")
+        Updater.Response = Embed
+    
+def GetRankBinds(GuildId:int):
+    if GuildId in RankBinds:
+        if RankBinds[GuildId]["LastUpdate"]+1000 > int(time.time()):
+            return RankBinds[GuildId]
+    
+    RankBinds[GuildId] = firebase.GetRankBinds(GuildId)
+    RankBinds[GuildId]["LastUpdate"] = int(time.time())
+
+    return RankBinds[GuildId]
         
     

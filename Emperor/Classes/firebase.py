@@ -30,3 +30,7 @@ async def GetVerifiedUser(DiscordMember:Member):
     User = user.UserClass(DiscordMember)
     await User.GetRoblox(RobloxId)
     return User
+
+def GetRankBinds(GuildId:int):
+    Ref = Reference(f"/GuildData/{GuildId}")
+    return Ref.get()

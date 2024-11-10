@@ -25,12 +25,13 @@ Verification.command(verify_command)
 @lightbulb.command("update", "Update a user or yourself.")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def update_command(ctx:lightbulb.SlashContext) -> None:
+    await ctx.respond(hikari.ResponseType.DEFERRED_MESSAGE_CREATE)
     User: user.UserClass = await firebase.GetVerifiedUser(ctx.member)
     if User.Verified:
-        if  ctx.options.user == None or ctx.options.user.id == User.DiscordUser.id:
+        if ctx.options.user == None or ctx.options.user.id == User.DiscordUser.id:
             await User.UpdateRoles(User)
         elif User.CanUpdate:
-            NewUser = await firebase.GetVerifiedUser(ctx.options.user.member)
+            NewUser = await firebase.GetVerifiedUser(await ctx.bot.rest.fetch_member(ctx.guild_id, ctx.options.user.id))
             await NewUser.UpdateRoles(User)
     else:
         User.PromptVerify()

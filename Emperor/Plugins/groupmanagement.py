@@ -22,10 +22,61 @@ Groups = {
     35016156:12, # sat
 }
 
+Branches = {
+    35076880, 35076877, 35076896
+}
+
 async def GetUserAndManagementPermissions(Member, Group):
     User = await firebase.GetVerifiedUser(Member)
     User.CanManage(Group, Groups[Group])
     return User
+
+@lightbulb.option("branch", "What branch you'd like to join.", type=int, required = True, choices=[
+    hikari.CommandChoice(name="Marines", value=35076880),
+    hikari.CommandChoice(name="Navy", value=35076877),
+    #hikari.CommandChoice(name="Police", value=35076896)
+    ])
+@lightbulb.command("enlist", "Enlist in a branch.")
+@lightbulb.implements(lightbulb.SlashCommand)
+async def Enlist(ctx:lightbulb.SlashContext):
+    await ctx.respond(hikari.ResponseType.DEFERRED_MESSAGE_CREATE)
+    VerifiedUser = await firebase.GetVerifiedUser(ctx.member)
+    if VerifiedUser.RobloxUser == None:
+        await ctx.respond("You're not verified. Run /verify in order to enlist.")
+        return
+
+    if VerifiedUser.GetGroupRank(35016156) == 0:
+        await ctx.respond("You must join Sataria to join a branch of its military. https://www.roblox.com/groups/35016156")
+        return
+
+    if VerifiedUser.GetGroupRank(ctx.options.branch) != 0:
+        await ctx.respond("You've already enlisted into this branch.")
+        return
+    
+    for Branch in Branches:
+        if VerifiedUser.GetGroupRank(Branch) != 0:
+            await ctx.respond("You've already enlisted into a branch. If you wish to change your branch, leave this group. \n-# All rank data regarding this branch will be removed when you leave." + f"\nhttps://www.roblox.com/groups/{Branch}")
+            return
+        
+    if not ctx.options.branch in Branches:
+        await ctx.respond(f"{ctx.options.branch} is not a valid option.")
+        return
+    
+    InGroup = await VerifiedUser.AcceptIntoGroup(ctx.options.branch)
+    if InGroup:
+        Approved = await VerifiedUser.SetRobloxRank(ctx.options.branch, 2)
+        if not Approved:
+            await ctx.respond(f"There was an issue ranking you. Contact a member of your branch's HR to resolve the issue.")  
+            return
+    else:
+        await ctx.respond(f"You're not pending for https://www.roblox.com/groups/{ctx.options.branch}. Please pend and rerun the command.")
+        return
+
+    await ctx.respond("You have succesfully enlisted.")
+    VerifiedUser.UpdateRanks()
+    await VerifiedUser.UpdateRoles(VerifiedUser)
+    await ctx.respond(VerifiedUser.Response)
+GroupManagement.command(Enlist)
 
 @lightbulb.option("group", "The group you want to", required=True, choices=[
     hikari.CommandChoice(name="Marines", value=35076880),
