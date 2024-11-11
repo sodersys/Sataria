@@ -38,7 +38,7 @@ class UserClass:
             self.Ranks = GetGroupIDsAndRanks(self.RobloxUser.id)
 
     async def GetRoblox(self, RobloxId):
-        if RobloxId != None and RobloxUser != 0:
+        if RobloxId != None and RobloxId != 0 and RobloxId:
             self.Verified = True
             self.RobloxUser = await GetRobloxUser(RobloxId)
             self.UpdateRanks()
@@ -112,8 +112,8 @@ class UserClass:
             self.Response = f"There is no roblox user associated with {RobloxAccountName}"
             return
         AlreadyVerified = firebase.Reference(f"/RobloxIDToDiscordID/{RequestedRobloxAccount.id}").get()
-        if AlreadyVerified != None:
-            self.Response = f"[{RequestedRobloxAccount.name}](https://www.roblox.com/users/{RequestedRobloxAccount.id}/profile) is already verified to a user."
+        if AlreadyVerified:
+            self.Response = f"[{RequestedRobloxAccount.name}](https://www.roblox.com/users/{RequestedRobloxAccount.id}/profile) is already verified to a <@{AlreadyVerified}>."
             return
 
         firebase.Reference(f"/PendingVerifications/{RequestedRobloxAccount.id}").set({"DiscordID":self.DiscordUser.id, "Username":self.DiscordUser.username})

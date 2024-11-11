@@ -34,7 +34,7 @@ async def GetUserAndManagementPermissions(Member, Group):
 @lightbulb.option("branch", "What branch you'd like to join.", type=int, required = True, choices=[
     hikari.CommandChoice(name="Marines", value=35076880),
     hikari.CommandChoice(name="Navy", value=35076877),
-    #hikari.CommandChoice(name="Police", value=35076896)
+    hikari.CommandChoice(name="Police", value=35076896)
     ])
 @lightbulb.command("enlist", "Enlist in a branch.")
 @lightbulb.implements(lightbulb.SlashCommand)

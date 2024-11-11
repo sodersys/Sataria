@@ -3,7 +3,7 @@ from Emperor.Classes import user
 
 import hikari
 import lightbulb
-from hikari import embeds
+from hikari import embeds, colors
 
 Verification = lightbulb.Plugin("verification", "Verification plugin")
 
@@ -13,6 +13,7 @@ Verification = lightbulb.Plugin("verification", "Verification plugin")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def verify_command(ctx:lightbulb.SlashContext) -> None:
     User: user.UserClass = await firebase.GetVerifiedUser(ctx.member)
+    print(User.Verified)
     if User.Verified:
         await User.UpdateRoles(User)
     else:
@@ -28,13 +29,14 @@ Verification.command(verify_command)
 async def ForceVerify(ctx:lightbulb.SlashContext):
     User: user.UserClass = await firebase.GetVerifiedUser(ctx.member)
     if not User.CanUpdate:
+        await ctx.respond("You can not run this command.")
         return
 
-    SelectedRobloxAccount = user.GetRobloxId(ctx.options.robloxname)
+    SelectedRobloxAccount = await user.GetRobloxId(ctx.options.robloxname)
     await ctx.respond(hikari.ResponseType.DEFERRED_MESSAGE_CREATE)
     Embed = embeds.Embed(title="Account Force Verified", description="<@"+str(ctx.options.discorduser.id)+"> / https://www.roblox.com/users/"+str(SelectedRobloxAccount.id)+"/profile", color=colors.Color(7110962))
     CurrentRobloxAccount = firebase.Reference(f"/DiscordIDToRobloxID/{ctx.options.discorduser.id}").get()
-    if CurrentRobloxAccount != None:
+    if CurrentRobloxAccount:
         if CurrentRobloxAccount == SelectedRobloxAccount.id:
             await ctx.respond("<@"+str(ctx.options.discorduser.id)+"> / https://www.roblox.com/users/"+str(SelectedRobloxAccount.id)+"/profile is already bound.")
             return
