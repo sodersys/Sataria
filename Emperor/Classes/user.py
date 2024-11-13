@@ -38,7 +38,7 @@ class UserClass:
             self.Ranks = GetGroupIDsAndRanks(self.RobloxUser.id)
 
     async def GetRoblox(self, RobloxId):
-        if RobloxId != None and RobloxId != 0 and RobloxId:
+        if RobloxId:
             self.Verified = True
             self.RobloxUser = await GetRobloxUser(RobloxId)
             self.UpdateRanks()
@@ -116,7 +116,7 @@ class UserClass:
             self.Response = f"[{RequestedRobloxAccount.name}](https://www.roblox.com/users/{RequestedRobloxAccount.id}/profile) is already verified to a <@{AlreadyVerified}>."
             return
 
-        firebase.Reference(f"/PendingVerifications/{RequestedRobloxAccount.id}").set({"DiscordID":self.DiscordUser.id, "Username":self.DiscordUser.username})
+        firebase.Reference(f"/PendingVerifications/{RequestedRobloxAccount.id}").set({"DiscordID":str(self.DiscordUser.id), "Username":self.DiscordUser.username})
         self.Response = f"A verification request has been created between [{RequestedRobloxAccount.name}](https://www.roblox.com/users/{RequestedRobloxAccount.id}/profile) and <@{self.DiscordUser.id}>. Join https://www.roblox.com/games/84342663532399/Verification-Game to verify."
 
     def PromptVerify(self):
@@ -125,7 +125,7 @@ class UserClass:
     
     async def UpdateRoles(self, Updater):
         if self.RobloxUser == None:
-            Updater.Response = "You're not verified ^^"
+            Updater.Response = "User is not verified."
             return
         
         GuildData = GetRankBinds(self.DiscordUser.guild_id)
@@ -205,7 +205,7 @@ class UserClass:
                     RankName = PassedData['RankName']
                 if "Roles" in PassedData:
                     RolesToGrant.extend(PassedData['Roles'])
-
+        RolesToGrant = list(set(RolesToGrant))
         for Roles in CurrentRoles:
             if not str(Roles.id) in GuildData['Roles']:
                 continue

@@ -13,7 +13,6 @@ Verification = lightbulb.Plugin("verification", "Verification plugin")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def verify_command(ctx:lightbulb.SlashContext) -> None:
     User: user.UserClass = await firebase.GetVerifiedUser(ctx.member)
-    print(User.Verified)
     if User.Verified:
         await User.UpdateRoles(User)
     else:
@@ -62,7 +61,8 @@ async def update_command(ctx:lightbulb.SlashContext) -> None:
         if ctx.options.user == None or ctx.options.user.id == User.DiscordUser.id:
             await User.UpdateRoles(User)
         elif User.CanUpdate:
-            NewUser = await firebase.GetVerifiedUser(await ctx.bot.rest.fetch_member(ctx.guild_id, ctx.options.user.id))
+            Member = await ctx.bot.rest.fetch_member(ctx.guild_id, ctx.options.user.id)
+            NewUser = await firebase.GetVerifiedUser(Member)
             await NewUser.UpdateRoles(User)
     else:
         User.PromptVerify()
