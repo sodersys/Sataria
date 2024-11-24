@@ -1,3 +1,4 @@
+import hikari.commands
 from Emperor.Classes import firebase
 from Emperor.Classes import guild
 from Emperor.Classes import group
@@ -11,7 +12,7 @@ GroupManagement = lightbulb.Plugin("groupmanagement", "Group management plugin")
 Groups = {
     35076880:10,#mar
     35076877:10,#nav
-    35076896:10,#pol
+    35076896:7,#pol
     35076890:10,#st
     35076899:10,#sp
     35076894:10,#ni
@@ -23,7 +24,7 @@ Groups = {
 }
 
 Branches = {
-    35076880, 35076877, 35076896
+    35076880, 35076877, 35076896, 35076884
 }
 
 async def GetUserAndManagementPermissions(Member, Group):
@@ -34,7 +35,8 @@ async def GetUserAndManagementPermissions(Member, Group):
 @lightbulb.option("branch", "What branch you'd like to join.", type=int, required = True, choices=[
     hikari.CommandChoice(name="Marines", value=35076880),
     hikari.CommandChoice(name="Navy", value=35076877),
-    hikari.CommandChoice(name="Police", value=35076896)
+    hikari.CommandChoice(name="Police", value=35076896),
+    hikari.CommandChoice(name="Magicians", value=35076884)
     ])
 @lightbulb.command("enlist", "Enlist in a branch.")
 @lightbulb.implements(lightbulb.SlashCommand)
@@ -53,10 +55,18 @@ async def Enlist(ctx:lightbulb.SlashContext):
         await ctx.respond("You've already enlisted into this branch.")
         return
     
-    for Branch in Branches:
-        if VerifiedUser.GetGroupRank(Branch) != 0:
-            await ctx.respond("You've already enlisted into a branch. If you wish to change your branch, leave this group. \n-# All rank data regarding this branch will be removed when you leave." + f"\nhttps://www.roblox.com/groups/{Branch}")
+    if ctx.options.branch == 35076884:
+        Coins = firebase.Reference(f"/ApprenticeCoins/{ctx.user.id}")
+        if Coins.get() == None:
+            await ctx.respond("You need at least 5 apprentice coins to enlist as a Magician. You have 0 <:apprenticecoin:1305245764401758361>.")
             return
+        if Coins.get()["Coins"] < 5:
+            await ctx.respond(f"You need at least 5 apprentice coins to enlist as a Magician. You have {Coins.get()["Coins"]} <:apprenticecoin:1305245764401758361>.")
+    else:
+        for Branch in Branches:
+            if VerifiedUser.GetGroupRank(Branch) != 0:
+                await ctx.respond("You've already enlisted into a branch. If you wish to change your branch, leave this group. \n-# All rank data regarding this branch will be removed when you leave." + f"\nhttps://www.roblox.com/groups/{Branch}")
+                return
         
     if not ctx.options.branch in Branches:
         await ctx.respond(f"{ctx.options.branch} is not a valid option.")
@@ -73,6 +83,8 @@ async def Enlist(ctx:lightbulb.SlashContext):
         return
 
     await ctx.respond("You have succesfully enlisted.")
+    if ctx.options.branch == 35076884:
+        Coins.update({"ExamKeys":Coins.get()["ExamKeys"], "Coins":Coins.get()["Coins"]-5})
     VerifiedUser.UpdateRanks()
     await VerifiedUser.UpdateRoles(VerifiedUser)
     await ctx.respond(VerifiedUser.Response)
